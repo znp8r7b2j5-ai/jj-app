@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="精进计划">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#faf5f2">
+<title>精进计划</title>
+
+<!-- PWA Manifest -->
+<script>
+// 动态生成 manifest，解决路径问题
+const manifest = {
+  name: "每周精进计划",
+  short_name: "精进计划",
+  description: "做一个有光又有实力的女生",
+  start_url: location.href,
+  display: "standalone",
+  orientation: "portrait",
+  background_color: "#faf5f2",
+  theme_color: "#faf5f2",
+  icons: [{
+    src: "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="40" fill="#f4e4e1"/><text x="96" y="110" text-anchor="middle" font-size="90">🌸</text></svg>'),
+    sizes: "192x192", type: "image/svg+xml"
+  }]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const manifestURL = URL.createObjectURL(blob);
+document.write('<link rel="manifest" href="' + manifestURL + '">');
+</script>
+
+<style>
+  :root {
+    --rose: #c77d7d;
+    --rose-light: #f4e4e1;
+    --rose-bg: #fdf5f3;
+    --sage: #7a9a7e;
+    --sage-light: #e8efe9;
+    --navy: #4a5568;
+    --navy-light: #edf2f7;
+    --gold: #b8936e;
+    --ink: #2d2a2a;
+    --ink-mid: #5a5656;
+    --ink-light: #8a8686;
+    --white: #ffffff;
+    --bg: #fdf9f7;
+    --card-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+    --card-shadow-lg: 0 4px 16px rgba(0,0,0,0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --font: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", -apple-system, sans-serif;
+    --font-serif: "Noto Serif SC", "STSong", "Songti SC", serif;
+    --safe-bottom: env(safe-area-inset-bottom, 16px);
+    --tab-height: 64px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.6;
+    height: 100%;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ===== APP SHELL ===== */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  #header {
+    background: linear-gradient(165deg, #faf5f2, #f0e5df);
+    padding: 44px 20px 20px;
+    text-align: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+  #header .greeting {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    color: #5a3e3a;
+    letter-spacing: 1.5px;
+    margin-bottom: 2px;
+  }
+  #header .date {
+    font-size: 12px;
+    color: #b0978f;
+    letter-spacing: 1px;
+  }
+  #header .week-badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 14px;
+    border-radius: 50px;
+    background: var(--white);
+    font-size: 11px;
+    color: var(--rose);
+    letter-spacing: 1px;
+    box-shadow: var(--card-shadow);
+  }
+
+  /* ===== MAIN CONTENT AREA ===== */
+  #main {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    padding: 0 16px 20px;
+    scroll-behavior: smooth;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; padding-bottom: 20px; }
+  .page.active { display: block; }
+
+  /* ===== SECTION HEADER ===== */
+  .sec-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 24px 0 12px;
+  }
+  .sec-head .icon { font-size: 22px; }
+  .sec-head h2 {
+    font-family: var(--font-serif);
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: 1px;
+    color: #4a3a36;
+  }
+
+  /* ===== TIME BLOCK CARDS ===== */
+  .time-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+  }
+  .time-card .tc-bar {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 4px;
+    border-radius: 0 2px 2px 0;
+  }
+  .time-card .tc-time {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    margin-bottom: 4px;
+  }
+  .time-card .tc-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .time-card .tc-list {
+    list-style: none;
+    font-size: 13px;
+    color: var(--ink-mid);
+    line-height: 1.9;
+  }
+  .time-card .tc-list li { padding-left: 14px; position: relative; }
+  .time-card .tc-list li::before {
+    content: '·';
+    position: absolute;
+    left: 2px;
+    font-weight: bold;
+  }
+  .bar-morning { background: #d4a574; }
+  .bar-work { background: var(--sage); }
+  .bar-noon { background: #e0b47c; }
+  .bar-evening { background: #8b7e9b; }
+  .bar-night { background: #6b7b8d; }
+  .tc-morning .tc-time { color: #d4a574; }
+  .tc-work .tc-time { color: var(--sage); }
+  .tc-noon .tc-time { color: #e0b47c; }
+  .tc-evening .tc-time { color: #8b7e9b; }
+  .tc-night .tc-time { color: #6b7b8d; }
+  .tc-morning .tc-list li::before { color: #d4a574; }
+  .tc-work .tc-list li::before { color: var(--sage); }
+  .tc-noon .tc-list li::before { color: #e0b47c; }
+  .tc-evening .tc-list li::before { color: #8b7e9b; }
+  .tc-night .tc-list li::before { color: #6b7b8d; }
+
+  .hl { background: linear-gradient(180deg, transparent 60%, #fce4dc 60%); padding: 0 3px; }
+  .hl-pro { background: linear-gradient(180deg, transparent 60%, #dce6f3 60%); padding: 0 3px; }
+
+  /* ===== PRO CARDS ===== */
+  .pro-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    box-shadow: var(--card-shadow);
+    border-left: 3px solid var(--navy);
+  }
+  .pro-card .pc-time {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: var(--navy);
+    margin-bottom: 3px;
+  }
+  .pro-card .pc-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .pro-card .pc-list {
+    list-style: none;
+    font-size: 12.5px;
+    color: var(--ink-mid);
+    line-height: 1.8;
+  }
+  .pro-card .pc-list li { padding-left: 12px; position: relative; }
+  .pro-card .pc-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--navy);
+    font-size: 9px;
+  }
+
+  /* ===== MARKET SNAPSHOT ===== */
+  .mkt-snap {
+    background: linear-gradient(135deg, #f8fafc, #edf2f7);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-size: 12.5px;
+    color: #4a5568;
+    line-height: 1.9;
+    border: 1px solid #e2e8f0;
+  }
+  .mkt-snap strong { color: var(--navy); }
+
+  /* ===== GOAL BOX ===== */
+  .goal-box {
+    background: linear-gradient(135deg, #f8fafc, #edf2f7);
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .goal-box h3 { font-size: 14px; color: var(--navy); margin-bottom: 8px; letter-spacing: 1px; }
+  .goal-box ul { list-style: none; font-size: 13px; color: var(--ink); line-height: 2; }
+  .goal-box ul li { padding-left: 16px; position: relative; }
+  .goal-box ul li::before { content: '✦'; position: absolute; left: 0; color: var(--navy); font-size: 9px; }
+
+  /* ===== WEEKLY CARDS ===== */
+  .card-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 0 8px;
+    scroll-snap-type: x mandatory;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .card-row::-webkit-scrollbar { display: none; }
+
+  .w-card {
+    flex: 0 0 180px;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    scroll-snap-align: start;
+    position: relative;
+  }
+  .w-card:active { transform: scale(0.97); }
+  .w-card .wc-emoji { font-size: 32px; display: block; margin-bottom: 6px; }
+  .w-card .wc-week { font-size: 10px; letter-spacing: 1.5px; color: var(--rose); font-weight: 600; margin-bottom: 4px; }
+  .w-card .wc-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .w-card .wc-desc { font-size: 11px; color: var(--ink-light); line-height: 1.5; }
+  .w-card .wc-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 50px;
+    background: var(--sage-light);
+    color: #6d8773;
+  }
+  .w-card.done { border: 2px solid var(--sage); }
+  .w-card.done::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 12px;
+    font-size: 14px; font-weight: bold;
+    color: var(--sage);
+  }
+
+  .p-card {
+    flex: 0 0 180px;
+    background: var(--white);
+    border-radius: var(--radius);
+    border-top: 3px solid var(--navy);
+    padding: 18px 14px;
+    box-shadow: var(--card-shadow);
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    scroll-snap-align: start;
+    position: relative;
+  }
+  .p-card:active { transform: scale(0.97); }
+  .p-card .wc-emoji { font-size: 28px; display: block; margin-bottom: 4px; }
+  .p-card .wc-week { font-size: 10px; letter-spacing: 1.5px; color: var(--navy); font-weight: 600; margin-bottom: 4px; }
+  .p-card .wc-title { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+  .p-card .wc-desc { font-size: 11px; color: var(--ink-light); line-height: 1.5; }
+  .p-card .wc-tag {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 50px;
+    background: var(--navy-light);
+    color: var(--navy);
+  }
+  .p-card.done { border: 2px solid var(--navy); }
+  .p-card.done::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 12px;
+    font-size: 14px; font-weight: bold;
+    color: var(--navy);
+  }
+
+  /* ===== CHECKLIST ===== */
+  .check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--white);
+    padding: 13px 16px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--card-shadow);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .check-item:active { background: #fdf5f3; }
+  .check-dot {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid #e0d3cd;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .check-item.done .check-dot {
+    background: var(--rose);
+    border-color: var(--rose);
+    color: white;
+    font-size: 14px;
+  }
+  .check-item.pro-item.done .check-dot {
+    background: var(--navy);
+    border-color: var(--navy);
+  }
+  .check-label { font-size: 14px; flex: 1; }
+  .check-item.done .check-label { color: #b0978f; text-decoration: line-through; }
+
+  /* ===== TAB BAR ===== */
+  .tab-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .tab-pill {
+    padding: 7px 16px;
+    border-radius: 50px;
+    font-size: 12px;
+    border: 1px solid #e0d3cd;
+    background: var(--white);
+    color: var(--ink-mid);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.5px;
+  }
+  .tab-pill.active {
+    background: var(--navy);
+    color: white;
+    border-color: var(--navy);
+  }
+  .tab-pill.life-tab.active {
+    background: var(--rose);
+    color: white;
+    border-color: var(--rose);
+  }
+
+  /* ===== EVENING CARDS ===== */
+  .eve-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    box-shadow: var(--card-shadow);
+    border-left: 3px solid #d4a574;
+  }
+  .eve-card:nth-child(2) { border-left-color: var(--sage); }
+  .eve-card:nth-child(3) { border-left-color: #8b7e9b; }
+  .eve-card:nth-child(4) { border-left-color: #d4a574; }
+  .eve-card:nth-child(5) { border-left-color: var(--rose); }
+	  .eve-card:nth-child(6) { border-left-color: #c77d7d; }
+	  .eve-card:nth-child(7) { border-left-color: var(--navy); }
+  .eve-card .ev-day { font-size: 10px; font-weight: 600; letter-spacing: 1.5px; margin-bottom: 2px; }
+  .eve-card:nth-child(1) .ev-day { color: #d4a574; }
+  .eve-card:nth-child(2) .ev-day { color: var(--sage); }
+  .eve-card:nth-child(3) .ev-day { color: #8b7e9b; }
+  .eve-card:nth-child(4) .ev-day { color: #d4a574; }
+  .eve-card:nth-child(5) .ev-day { color: var(--rose); }
+	  .eve-card:nth-child(6) .ev-day { color: #c77d7d; }
+	  .eve-card:nth-child(7) .ev-day { color: var(--navy); }
+  .eve-card .ev-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .eve-card .ev-desc { font-size: 12.5px; color: var(--ink-mid); line-height: 1.7; }
+
+  /* ===== MODAL ===== */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    justify-content: center;
+    align-items: flex-end;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-sheet {
+    background: var(--white);
+    border-radius: 20px 20px 0 0;
+    padding: 28px 22px calc(24px + var(--safe-bottom));
+    max-width: 480px;
+    width: 100%;
+    max-height: 70vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+  .modal-sheet .ms-handle {
+    width: 32px; height: 4px;
+    background: #e0d3cd;
+    border-radius: 2px;
+    margin: 0 auto 16px;
+  }
+  .modal-sheet .ms-emoji { font-size: 44px; text-align: center; display: block; margin-bottom: 8px; }
+  .modal-sheet .ms-week { font-size: 11px; color: var(--rose); text-align: center; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 4px; }
+  .modal-sheet .ms-title { font-family: var(--font-serif); font-size: 19px; text-align: center; margin-bottom: 12px; letter-spacing: 1px; }
+  .modal-sheet .ms-desc { font-size: 14px; color: var(--ink-mid); line-height: 1.9; }
+  .modal-sheet .ms-btn {
+    display: block;
+    width: 100%;
+    margin-top: 18px;
+    padding: 12px;
+    border: none;
+    border-radius: 50px;
+    background: var(--rose);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.2s;
+  }
+  .modal-sheet .ms-btn:active { background: #b56a6a; }
+  .modal-sheet .ms-btn.did-it { background: var(--sage); }
+  .modal-sheet .ms-btn.pro-btn { background: var(--navy); }
+  .modal-sheet .ms-btn.pro-btn:active { background: #3a4a60; }
+  .modal-sheet .ms-close {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: #f5f0ed;
+    border: none;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    color: var(--ink-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ===== BOTTOM TAB BAR ===== */
+  #tabbar {
+    display: flex;
+    background: var(--white);
+    border-top: 1px solid #f0e8e3;
+    padding: 8px 12px var(--safe-bottom);
+    flex-shrink: 0;
+    gap: 4px;
+    z-index: 10;
+  }
+  #tabbar .tab-item {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: background 0.2s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #tabbar .tab-item:active { background: #fdf5f3; }
+  #tabbar .tab-icon { font-size: 22px; display: block; margin-bottom: 2px; }
+  #tabbar .tab-label { font-size: 10px; color: var(--ink-light); letter-spacing: 0.5px; }
+  #tabbar .tab-item.active .tab-label { color: var(--rose); font-weight: 600; }
+
+  /* ===== QUOTE ===== */
+  .quote-block {
+    text-align: center;
+    padding: 28px 16px;
+    background: linear-gradient(180deg, transparent, #faf5f2);
+    border-radius: var(--radius);
+    margin-top: 8px;
+  }
+  /* ===== SAVE BANNER ===== */
+  #saveBanner {
+    background: #4a3a36;
+    color: white;
+    text-align: center;
+    padding: 12px 16px;
+    font-size: 13px;
+    letter-spacing: 1px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  #saveBanner:active { opacity: 0.85; }
+  #saveBanner.hidden { display: none; }
+
+  .quote-block .q-text {
+    font-family: var(--font-serif);
+    font-size: 15px;
+    color: #6b5650;
+    letter-spacing: 1.2px;
+    line-height: 2.2;
+  }
+  .quote-block .q-author { font-size: 12px; color: #b0978f; margin-top: 10px; letter-spacing: 1px; }
+
+  /* ===== DAY LABELS ===== */
+  .day-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .day-dot {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    color: var(--ink-light);
+    padding: 4px 0;
+    font-weight: 500;
+  }
+
+  /* ===== RESET BUTTON ===== */
+  .reset-btn {
+    display: block;
+    margin: 14px auto 0;
+    background: none;
+    border: 1px solid #e0d3cd;
+    color: var(--ink-light);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background 0.2s;
+  }
+  .reset-btn:active { background: #fdf5f3; }
+
+  /* ===== INSTALL BANNER ===== */
+  #installBanner {
+    display: none;
+    position: fixed;
+    bottom: calc(var(--tab-height) + var(--safe-bottom) + 16px);
+    left: 16px; right: 16px;
+    background: #4a3a36;
+    color: white;
+    padding: 14px 18px;
+    border-radius: 14px;
+    z-index: 150;
+    max-width: 448px;
+    margin: 0 auto;
+    font-size: 13px;
+    line-height: 1.5;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  #installBanner .ib-close {
+    position: absolute;
+    top: 6px; right: 12px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.6);
+    font-size: 18px;
+    cursor: pointer;
+  }
+  #installBanner .ib-btn {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 6px 16px;
+    background: var(--rose);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-size: 12px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+  }
+
+	  /* ===== DIET / WEIGHT LOSS ===== */
+	  .diet-ring-wrap { display: flex; justify-content: center; margin: 8px 0; }
+	  .diet-ring-container { position: relative; width: 120px; height: 120px; }
+	  .diet-ring-container canvas { width: 120px; height: 120px; }
+	  .diet-ring-text {
+	    position: absolute; top: 50%; left: 50%;
+	    transform: translate(-50%,-50%); text-align: center;
+	  }
+	  .diet-ring-text .num { font-size: 2rem; font-weight: 700; color: #c77d7d; line-height: 1; }
+	  .diet-ring-text .lbl { font-size: 0.65rem; color: var(--ink-light); margin-top: 2px; }
+	  .diet-stats {
+	    display: flex; justify-content: center; gap: 18px;
+	    margin: 6px 0 12px; font-size: 0.7rem; color: var(--ink-light);
+	  }
+	  .diet-stats b { color: var(--ink); font-weight: 700; }
+	  .diet-input-row { display: flex; gap: 8px; align-items: center; }
+	  .diet-input-row input {
+	    flex: 1; padding: 10px 14px; border: 2px solid #e8dfd8;
+	    border-radius: 12px; font-size: 0.9rem; text-align: center;
+	    background: #fdf9f7; color: var(--ink);
+	  }
+	  .diet-input-row input:focus { border-color: #c77d7d; outline: none; }
+	  .diet-btn {
+	    padding: 10px 18px; border: none; border-radius: 12px;
+	    color: white; font-size: 0.85rem; font-weight: 600; cursor: pointer;
+	    background: var(--rose); letter-spacing: 0.5px;
+	  }
+	  .diet-btn:active { background: #b56a6a; }
+	  .diet-water-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+	  .diet-cup {
+	    text-align: center; padding: 8px 2px; border-radius: 12px;
+	    border: 1.5px solid #e8dfd8; cursor: pointer; font-size: 0.68rem;
+	    transition: all 0.2s; background: #fdf9f7; color: var(--ink-light);
+	  }
+	  .diet-cup.done { border-color: var(--sage); background: #e8efe9; color: #6d8773; }
+	  .diet-cup .cup-icon { font-size: 1.2rem; display: block; margin-bottom: 1px; }
+	  .diet-step-row { display: flex; align-items: center; justify-content: center; gap: 14px; }
+	  .diet-step-row button {
+	    width: 36px; height: 36px; border-radius: 50%;
+	    border: 1.5px solid #e8dfd8; background: #fff;
+	    color: #c77d7d; font-size: 1.2rem; cursor: pointer;
+	    display: flex; align-items: center; justify-content: center;
+	  }
+	  .diet-step-row button:active { background: #fdf5f3; }
+	  .diet-step-num { font-size: 1.4rem; font-weight: 700; color: var(--ink); min-width: 60px; text-align: center; }
+	  .diet-summary { display: flex; gap: 6px; font-size: 0.7rem; color: var(--ink-light); }
+	  .diet-summary span {
+	    flex: 1; text-align: center; background: #fdf9f7;
+	    border-radius: 10px; padding: 8px 2px;
+	  }
+	  .diet-summary b { color: var(--ink); display: block; font-size: 1rem; margin-top: 1px; }
+
+
+	  /* ===== WEATHER PAGE ===== */
+	  .weather-header { text-align: center; padding: 8px 0; }
+	  .weather-location { font-family: var(--font-serif); font-size: 20px; color: #4a3a36; letter-spacing: 1px; }
+	  .weather-date-sm { font-size: 12px; color: var(--ink-light); margin-top: 2px; }
+	  .weather-now-card {
+	    background: linear-gradient(160deg, #e8f0fa 0%, #f5f0f6 40%, #fdf5f3 100%);
+	    border-radius: var(--radius);
+	    padding: 20px;
+	    text-align: center;
+	    margin: 12px 0;
+	    box-shadow: var(--card-shadow);
+	  }
+	  .weather-temp-big { font-size: 56px; font-weight: 300; color: #4a3a36; line-height: 1; letter-spacing: -2px; }
+	  .weather-icon-big { font-size: 48px; margin: 4px 0; }
+	  .weather-desc { font-size: 14px; color: var(--ink-mid); }
+	  .weather-hilo { font-size: 13px; color: var(--ink-light); margin-top: 6px; }
+	  .weather-hilo span { font-weight: 600; color: var(--ink); }
+	  .weather-card {
+	    background: var(--white);
+	    border-radius: var(--radius);
+	    padding: 14px 16px;
+	    margin-bottom: 10px;
+	    box-shadow: var(--card-shadow);
+	  }
+	  .weather-card-title { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 10px; }
+	  .rain-bar-row { display: flex; align-items: flex-end; gap: 3px; height: 70px; padding: 0 2px; }
+	  .rain-bar-col { flex: 1; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+	  .rain-bar-fill {
+	    width: 100%; max-width: 30px; border-radius: 6px 6px 0 0;
+	    min-height: 4px; transition: height 0.5s;
+	  }
+	  .rain-bar-label { font-size: 9px; color: var(--ink-light); margin-top: 4px; }
+	  .rain-bar-pct { font-size: 9px; color: var(--ink-mid); font-weight: 600; }
+	  .advice-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--ink-mid); }
+	  .advice-row .advice-icon { font-size: 28px; flex-shrink: 0; width: 36px; text-align: center; }
+	  .advice-row .advice-text { line-height: 1.6; }
+	  .advice-row .advice-text strong { color: var(--ink); }
+	  .weather-loading { text-align: center; padding: 30px; color: var(--ink-light); font-size: 13px; }
+	  .weather-error { text-align: center; padding: 20px; color: var(--rose); font-size: 13px; }
+	  .weather-error button {
+	    margin-top: 10px; padding: 8px 20px; border: 1px solid var(--rose); border-radius: 20px;
+	    background: none; color: var(--rose); font-size: 12px; cursor: pointer;
+	  }
+
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ===== HEADER ===== -->
+  <div id="header">
+    <div class="greeting" id="greeting"></div>
+    <div class="date" id="headerDate"></div>
+    <div class="week-badge" id="weekBadge"></div>
+  </div>
+
+  <!-- ===== SAVE BANNER ===== -->
+  <div id="saveBanner" onclick="saveToPhone()">
+    📲 手机 Safari 打开 <strong>http://192.168.0.104:8888</strong> → 分享 → 添加到主屏幕
+  </div>
+
+  <!-- ===== MAIN ===== -->
+  <div id="main">
+
+    <!-- PAGE: 天气 -->
+    <div class="page active" id="page-weather">
+      <div class="weather-header">
+        <div class="weather-location">📍 宜昌</div>
+        <div class="weather-date-sm" id="weatherDateSm"></div>
+      </div>
+
+      <div class="weather-now-card">
+        <div class="weather-temp-big" id="weatherTemp">--°</div>
+        <div class="weather-icon-big" id="weatherIcon">🌤</div>
+        <div class="weather-desc" id="weatherDesc">加载中...</div>
+        <div class="weather-hilo">🌡 <span id="weatherHi">--</span> / <span id="weatherLo">--</span> 体感 <span id="weatherFeels">--</span></div>
+      </div>
+
+      <div class="weather-card">
+        <div class="weather-card-title">⏰ 今日降雨概率</div>
+        <div class="rain-bar-row" id="rainTimeline">
+          <div class="weather-loading">加载中...</div>
+        </div>
+      </div>
+
+      <div class="weather-card" id="weatherAdviceCard">
+        <div class="weather-card-title">💡 今日出门建议</div>
+        <div id="weatherAdvice"><div class="weather-loading">正在分析天气...</div></div>
+      </div>
+    </div>
+
+    <!-- PAGE: 日课 -->
+    <div class="page" id="page-daily">
+      <div class="sec-head"><span class="icon">🌅</span><h2>一日节奏</h2></div>
+
+      <div class="time-card tc-morning">
+        <div class="tc-bar bar-morning"></div>
+        <div class="tc-time">7:30 — 8:30 · 晨间仪式</div>
+        <div class="tc-title">🌤 从容出门，不慌不忙</div>
+        <ul class="tc-list">
+          <li><strong>7:30</strong> 不碰手机直接起床，一杯温水+拉开窗帘</li>
+          <li><strong>7:35</strong> 洗漱+护肤：水→精华→面霜→<span class="hl">防晒是底线</span></li>
+          <li><strong>7:50</strong> 化妆：底妆干净+眉毛精致+口红，<span class="hl">喷上今天的香水</span></li>
+          <li><strong>8:05</strong> 穿上昨晚挂好的衣服，对镜子说<span class="hl">"今天会有好事发生"</span></li>
+          <li><strong>8:10</strong> 出门——<span class="hl">步行20分钟或骑车10分钟</span>，清晨空气是最好的醒脑剂</li>
+          <li><strong>8:25</strong> 到公司，吃早餐：蛋白质+碳水+水果</li>
+        </ul>
+      </div>
+
+      <div class="time-card tc-work">
+        <div class="tc-bar bar-work"></div>
+        <div class="tc-time">8:30 — 11:30 · 上午工作</div>
+        <div class="tc-title">🌿 专业感就是最高级的美</div>
+        <ul class="tc-list">
+          <li>桌面只留 3 样：<strong>电脑 + 水杯 + 笔记本</strong></li>
+          <li>上午不刷社交网络——<span class="hl">最清醒的大脑留给深度工作</span></li>
+          <li>每小时起来接水+活动肩颈+<span class="hl">检查体态：沉肩、收腹</span></li>
+          <li>见客户前：<strong>深吸一口气+微笑</strong>，停顿1秒再开口</li>
+          <li>说话时<span class="hl">语速放慢半拍</span>——优雅的人都不慌张</li>
+        </ul>
+      </div>
+
+      <div class="time-card tc-noon">
+        <div class="tc-bar bar-noon"></div>
+        <div class="tc-time">11:30 — 13:00 · 午间充电</div>
+        <div class="tc-title">🍽 下午状态的分水岭</div>
+        <ul class="tc-list">
+          <li><strong>专心吃饭，不看手机</strong></li>
+          <li>饭后慢走 10-15 分钟，不马上坐下</li>
+          <li><strong>护手霜 + 补口红</strong> —— 精致感拉满</li>
+          <li>小憩 20 分钟（设闹钟，不超 25 分钟）</li>
+        </ul>
+      </div>
+
+      <div class="time-card tc-work">
+        <div class="tc-bar bar-work"></div>
+        <div class="tc-time">13:00 — 16:30 · 下午工作</div>
+        <div class="tc-title">🍵 守住能量，拒绝下午崩塌</div>
+        <ul class="tc-list">
+          <li>15:00 一杯<strong>红茶/花茶</strong>，给自己3分钟放空</li>
+          <li>每坐45分钟起身做<strong>10个沉肩动作+伸展侧腰</strong></li>
+          <li><span class="hl">补妆：吸油纸+蜜粉+口红</span>——下午也要精致</li>
+          <li>加餐选<strong>坚果/水果</strong>，不选高糖零食</li>
+          <li>下班前10分钟写"关机清单"</li>
+        </ul>
+      </div>
+
+      <div class="time-card tc-evening">
+        <div class="tc-bar bar-evening"></div>
+        <div class="tc-time">16:30 — 18:30 · 下班切换</div>
+        <div class="tc-title">🌅 划清工作与生活的边界</div>
+        <ul class="tc-list">
+          <li>写完关机清单=<strong>今天工作到此结束</strong></li>
+          <li>回家路上听放松歌单，<span class="hl">楼下深深吸三口气</span>——切换生活模式</li>
+          <li>到家先<strong>换掉外出服+卸妆</strong>，穿上柔软家居服</li>
+          <li>16:30下班是巨大优势——<span class="hl">晚上的时间又长又从容</span></li>
+        </ul>
+      </div>
+
+      <div class="time-card tc-night">
+        <div class="tc-bar bar-night"></div>
+        <div class="tc-time">18:30 — 23:30 · 晚间精进</div>
+        <div class="tc-title">🌙 真正属于你自己的时间</div>
+        <ul class="tc-list">
+          <li><strong>18:30</strong> 晚餐清淡七分饱</li>
+          <li><strong>19:30</strong> 按<strong>每周晚间主题</strong>安排（见专业页）</li>
+          <li><strong>19:30 — 21:30</strong> <span class="hl">深度学习 2 小时</span>：专业研究 / AI 工具 / 选股分析（轮换）</li>
+          <li><strong>21:30</strong> 准备明天：<span class="hl">衣服挂好+包整理好+早餐食材备好</span></li>
+          <li><strong>22:00</strong> 认真护肤：卸妆→洁面→水→精华→面霜→<span class="hl">身体乳</span></li>
+          <li><strong>22:30</strong> 写<strong>"今日三件好事"</strong>+一件明天期待的事</li>
+          <li><strong>23:00 手机放客厅充电</strong>，上床读几页书</li>
+          <li><strong>23:30</strong> 关灯，对自己说"今天辛苦了"</li>
+        </ul>
+      </div>
+
+      <div class="sec-head"><span class="icon">✨</span><h2>举手投足</h2></div>
+      <div class="time-card" style="border-left: 3px solid #c77d7d;">
+        <div style="font-size:13px;color:var(--ink-mid);line-height:2.2;">
+          <p>🌸 <strong>体态</strong>：走路时头顶向上延伸，像有根线在轻轻拉你</p>
+          <p>🌸 <strong>微笑</strong>：见人先笑再开口，笑容是最好的开场白</p>
+          <p>🌸 <strong>声音</strong>：语速放慢半拍，声音自然压低一点更有分量</p>
+          <p>🌸 <strong>香水</strong>：每天喷香水——气味是你的隐形名片</p>
+          <p>🌸 <strong>细节</strong>：护手霜随身带，指甲干净，衣服无线头</p>
+          <p>🌸 <strong>坐姿</strong>：膝盖并拢或交叠，不翘二郎腿</p>
+          <p>🌸 <strong>眼神</strong>：和人说话时看着对方眼睛，听完再回应</p>
+        </div>
+      </div>
+
+      <div class="sec-head"><span class="icon">🌸</span><h2>周末仪式 · 一周的温柔回血</h2></div>
+      <div class="time-card" style="border-left: 3px solid #d4a574;">
+        <div style="font-size:13px;color:var(--ink-mid);line-height:2.1;">
+          <p>📚 <strong>周六上午 9:30-12:00</strong>：讲座/加班——辛苦但值得的投资</p>
+          <p>☀️ <strong>周六午后</strong>：讲座结束，给自己一顿好午餐，不赶时间慢慢吃</p>
+          <p>🚶 <strong>周六下午</strong>：逛花市/书店/咖啡馆/公园散步——给自己一场小约会</p>
+          <p>🧖 <strong>周六晚间</strong>：面膜+身体磨砂+发膜+泡脚——比工作日更认真的护肤</p>
+          <p>👗 <strong>周日准备</strong>：整理衣柜+搭配好下周5天衣服+熨烫挂好</p>
+          <p>🎒 <strong>周日备餐</strong>：准备好周一早餐食材+包整理好+钥匙手机位固定</p>
+          <p>📝 <strong>周日复盘</strong>：回顾本周+写下周3个目标+早睡迎接新一周</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: 专业 -->
+    <div class="page" id="page-pro">
+      <div class="sec-head"><span class="icon">📊</span><h2>专业日课</h2></div>
+      <p style="font-size:13px;color:var(--ink-light);margin-bottom:14px;">
+        理财经理的核心竞争力 = 市场敏锐度 × 产品理解 × 客户共情力
+      </p>
+
+      <div class="mkt-snap" id="marketSnapshot">
+        <strong>📰 每日盘前必做（8:10-8:25，通勤路上）：</strong><br>
+        ① 昨夜外盘：美股三大指数 + 恒生期指 + A50<br>
+        ② 国际金价 + 原油 · ③ 财联社头条 3 条<br>
+        ④ 记下 1 个今天可能影响客户情绪的关键事件
+      </div>
+
+      <div class="pro-card"><div class="pc-time">8:10-8:25 · 通勤</div><div class="pc-title">📡 盘前信息扫描</div><ul class="pc-list"><li>财联社/华尔街见闻，只看标题和摘要</li><li>心里准备一句话：今天客户问行情我怎么说？</li><li><span class="hl-pro">把关注的公众号整理到一个文件夹</span></li></ul></div>
+      <div class="pro-card"><div class="pc-time">8:30-8:40 · 开工</div><div class="pc-title">🎯 今日三个目标</div><ul class="pc-list"><li>笔记本写下今天最重要的 3 个业务目标</li><li>写下来而不是在脑子里想 —— 完成率高 3 倍</li></ul></div>
+      <div class="pro-card"><div class="pc-time">10:00-10:20 · 黄金时间</div><div class="pc-title">📞 客户主动触达</div><ul class="pc-list"><li>每天主动联系 3-5 个客户（一对一，不群发）</li><li>公式：<strong>关心 + 有价值信息 + 开放问题</strong></li></ul></div>
+      <div class="pro-card"><div class="pc-time">11:00-11:30 · 收盘前</div><div class="pc-title">📋 产品学习</div><ul class="pc-list"><li>每天研究 1 个产品的底层逻辑</li><li><span class="hl-pro">用自己的话讲一遍，假装在跟客户解释</span></li></ul></div>
+      <div class="pro-card"><div class="pc-time">14:00-14:15 · 午后</div><div class="pc-title">📝 市场简报输出</div><ul class="pc-list"><li>200 字以内写"今日市场小结"发朋友圈/客户群</li><li>发生了什么 + 为什么 + 对投资者意味着什么</li></ul></div>
+      <div class="pro-card"><div class="pc-time">16:00-16:20 · 下班前</div><div class="pc-title">🔍 复盘 15 分钟</div><ul class="pc-list"><li>今天联系的客户有进展吗？学到了什么？</li><li><span class="hl-pro">日拱一卒，不复盘等于白干</span></li></ul></div>
+
+      <div class="sec-head"><span class="icon">🎯</span><h2>本季度专业目标</h2></div>
+      <div class="goal-box"><ul>
+        <li>独立讲清 10 个核心产品的底层逻辑</li><li>每天 1 条市场简评，建立个人专业品牌</li><li>读完 2 本金融经典并写笔记</li><li>考取/准备 1 个行业证书</li><li>打造自己的"客户百问百答"知识库</li>
+      </ul></div>
+
+      <div class="sec-head"><span class="icon">🌙</span><h2>晚间主题</h2></div>
+      <div class="eve-card"><div class="ev-day">周一</div><div class="ev-title">✨ 护肤深度日</div><div class="ev-desc">面膜+精华+面部刮痧+身体乳。从头到脚宠爱自己。敷面膜时听一期金融播客。</div></div>
+      <div class="eve-card"><div class="ev-day">周二</div><div class="ev-title">🏃 运动焕亮日</div><div class="ev-desc">瑜伽/普拉提/慢跑30-40分钟。运动后的红润气色比任何腮红都好看。</div></div>
+      <div class="eve-card"><div class="ev-day">周三</div><div class="ev-title">📖 阅读养心日</div><div class="ev-desc">30-40分钟纸质书。一周金融一周文学——金融给深度，文学给气质。</div></div>
+      <div class="eve-card"><div class="ev-day">周四</div><div class="ev-title">💬 社交/放松日</div><div class="ev-desc">给朋友发消息、给家人打电话。练习"带着好奇心倾听"——对客户也是同一套能力。</div></div>
+      <div class="eve-card"><div class="ev-day">周五</div><div class="ev-title">🛁 犒赏自己日</div><div class="ev-desc">泡澡+香薰蜡烛+好电影。睡前写"本周最骄傲的3个时刻"。这一周辛苦了。</div></div>
+      <div class="eve-card"><div class="ev-day">周六</div><div class="ev-title">🌸 深度宠爱日</div><div class="ev-desc">上午讲座结束后，下午自由安排。晚间身体磨砂+发膜+泡脚。犒赏辛苦了一周的自己。</div></div>
+      <div class="eve-card"><div class="ev-day">周日</div><div class="ev-title">📋 优雅准备日</div><div class="ev-desc">整理衣柜+搭配好下周5天衣服+熨烫。准备好周一的一切。从容的女人最有魅力。</div></div>
+    </div>
+
+    <!-- PAGE: 计划 -->
+    <div class="page" id="page-plan">
+      <div class="sec-head"><span class="icon">🎨</span><h2>每周一件有意思的小事</h2></div>
+      <p style="font-size:13px;color:var(--ink-light);margin-bottom:12px;">左滑查看更多 → 点击打卡</p>
+      <div class="card-row" id="artCards"></div>
+
+      <div class="sec-head"><span class="icon">📈</span><h2>专业进阶 · 每周一个深度突破</h2></div>
+      <p style="font-size:13px;color:var(--ink-light);margin-bottom:12px;">左滑查看更多 → 点击打卡</p>
+      <div class="card-row" id="proCards"></div>
+    </div>
+
+    <!-- PAGE: 打卡 -->
+    <div class="page" id="page-check">
+      <div class="sec-head"><span class="icon">✅</span><h2>今日打卡</h2></div>
+      <p style="font-size:12px;color:var(--ink-light);margin-bottom:12px;" id="checkDate"></p>
+
+      <div class="tab-row">
+        <span class="tab-pill life-tab active" onclick="switchCheckTab('life')">🌸 生活好习惯</span>
+        <span class="tab-pill" onclick="switchCheckTab('pro')">📊 专业好习惯</span>
+      </div>
+
+      <div id="checkList"></div>
+
+      <button class="reset-btn" onclick="resetToday()">↺ 重新开始今日</button>
+    </div>
+
+    <!-- PAGE: 减脂 -->
+    <div class="page" id="page-diet">
+      <div class="sec-head"><span class="icon">💪</span><h2>减脂打卡 · 45天计划</h2></div>
+      <p style="font-size:12px;color:var(--ink-light);margin-bottom:10px;">57kg → 52.5kg · 每天1100-1200大卡</p>
+
+      <div class="diet-ring-wrap">
+        <div class="diet-ring-container">
+          <canvas id="dietRingCanvas"></canvas>
+          <div class="diet-ring-text">
+            <div class="num" id="dietRingNum">0.0</div>
+            <div class="lbl">已减斤数</div>
+          </div>
+        </div>
+      </div>
+      <div class="diet-stats">
+        <span>目标 <b>9.0</b> 斤</span>
+        <span>第 <b id="dietDayNum">1</b>/45 天</span>
+      </div>
+
+      <!-- 体重 -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--card-shadow);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;">⚖️ 今日体重</div>
+        <div class="diet-input-row">
+          <input type="number" id="dietWeightInput" placeholder="输入体重 kg" step="0.1" min="40" max="60">
+          <button class="diet-btn" onclick="dietSaveWeight()">记录</button>
+        </div>
+        <div style="font-size:11px;color:var(--ink-light);margin-top:6px;" id="dietWeightNote"></div>
+      </div>
+
+      <!-- 饮水 -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--card-shadow);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:10px;">💧 饮水 · 2000ml</div>
+        <div class="diet-water-grid" id="dietWaterGrid"></div>
+      </div>
+
+      <!-- 步数 -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--card-shadow);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;">🚶 走路 · 6000-8000步</div>
+        <div class="diet-step-row">
+          <button onclick="dietChangeSteps(-500)">−</button>
+          <span class="diet-step-num" id="dietStepDisplay">0</span>
+          <button onclick="dietChangeSteps(500)">+</button>
+        </div>
+      </div>
+
+      <!-- 今日饮食参考 -->
+      <div style="background:var(--white);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--card-shadow);">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;">📋 今日饮食参考</div>
+        <div class="diet-summary">
+          <span>早餐<b>~300</b>kcal</span>
+          <span>午餐<b>~400</b>kcal</span>
+          <span>晚餐<b>~350</b>kcal</span>
+          <span>加餐<b>≤100</b>kcal</span>
+        </div>
+        <div style="font-size:11px;color:var(--ink-light);margin-top:8px;line-height:1.7;">
+          早餐：水煮蛋+豆浆+小番茄 / 燕麦+鸡蛋+黄瓜<br>
+          午餐：杂粮饭半碗+鱼/鸡胸+蔬菜+汤<br>
+          晚餐：蔬菜汤+豆腐/鸡丝/虾（不吃主食）<br>
+          ⚠️ 不吃奶茶/蛋糕/油炸/肥肉
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOTTOM TAB BAR ===== -->
+  <div id="tabbar">
+    <div class="tab-item active" data-page="weather">
+      <span class="tab-icon">🌤</span>
+      <span class="tab-label">天气</span>
+    </div>
+    <div class="tab-item" data-page="daily">
+      <span class="tab-icon">🌅</span>
+      <span class="tab-label">日课</span>
+    </div>
+    <div class="tab-item" data-page="pro">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">专业</span>
+    </div>
+    <div class="tab-item" data-page="plan">
+      <span class="tab-icon">🎨</span>
+      <span class="tab-label">计划</span>
+    </div>
+    <div class="tab-item" data-page="check">
+      <span class="tab-icon">✅</span>
+      <span class="tab-label">打卡</span>
+    </div>
+    <div class="tab-item" data-page="diet">
+      <span class="tab-icon">💪</span>
+      <span class="tab-label">减脂</span>
+    </div>
+  </div>
+
+  <!-- ===== INSTALL BANNER ===== -->
+  <div id="installBanner">
+    <button class="ib-close" onclick="dismissInstall()">✕</button>
+    <strong>📱 添加到手机主屏幕，像 App 一样用</strong><br>
+    Safari 打开 → 点下方 <strong>分享按钮</strong> → <strong>"添加到主屏幕"</strong><br>
+    <span style="font-size:11px;color:rgba(255,255,255,0.7);">每天自动更新天气，离线也能打卡 ✨</span>
+    <button class="ib-btn" onclick="dismissInstall()">知道了</button>
+  </div>
+
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="ms-handle"></div>
+    <span class="ms-emoji" id="msEmoji"></span>
+    <div class="ms-week" id="msWeek"></div>
+    <div class="ms-title" id="msTitle"></div>
+    <div class="ms-desc" id="msDesc"></div>
+    <button class="ms-btn" id="msBtn" onclick="toggleCardDone()">✓ 我完成啦</button>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// SAVE TO PHONE
+// ==========================================
+function saveToPhone() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], {type: 'application/octet-stream'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'jjjh';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  document.getElementById('saveBanner').classList.add('hidden');
+  alert('已下载！去「文件」App → 找到「jjjh」→ 点一下文件名 → 改成「jjjh.html」→ 长按文件 → 快速查看');
+}
+
+// If opened standalone (PWA), hide the banner
+if (window.navigator.standalone) {
+  document.getElementById('saveBanner').classList.add('hidden');
+}
+
+// ==========================================
+// DATA
+// ==========================================
+const artPlans = [
+  { week:'第1周',emoji:'💐',title:'逛花市+插花',desc:'去花市挑3-5种花材，回家自己插一瓶花。',tag:'花艺',detail:'给自己买花，是"我在乎自己的生活"最直接的信号。选花时相信直觉——什么颜色让你心跳快一拍，就买它。回家剪枝、去叶、高低错落地插进瓶里，这个过程本身就是一场微型冥想。之后每天给花换水，看它一天天开，会觉得生活里还是有很多温柔的。' },
+  { week:'第2周',emoji:'🎵',title:'做一张自己的歌单',desc:'选10首歌，取个名字，认真听每首的歌词和编曲。',tag:'音乐',detail:'我们每天都在被动地听算法推的歌。这一周你来做自己的音乐编辑。定一个场景——下班路上、周日早晨、泡澡的时候——一首一首亲手挑。给每首歌写一句短评，就像给未来的自己留言。下次再听到这张歌单，你会想起这个初夏的你。' },
+  { week:'第3周',emoji:'✍️',title:'手写一封信或一首诗',desc:'用纸和笔，给在乎的人写一封信，或抄一首喜欢的诗。',tag:'书写',detail:'键盘敲出的字和手写出来的字，是完全不同的两种东西。找个安静的晚上，找一张干净的纸，用你最好看的字迹写点什么。重点是慢下来——一笔一划地写，感受这个时代已经很少有的事情。' },
+  { week:'第4周',emoji:'🖌',title:'水彩涂鸦',desc:'买一盒入门水彩，把今天触动你的颜色画在纸上。',tag:'绘画',detail:'不需要会画画。水彩的魔力在于水和颜料自己会做大部分工作——颜色放上去会自然晕开、混合，永远有惊喜。今天的天空是什么颜色？喝的咖啡是什么颜色？穿的衣服是什么颜色？涂在纸上，这是你这一天的"色谱日记"。' },
+  { week:'第5周',emoji:'📷',title:'摄影漫步：拍光',desc:'带着手机出门走30分钟，只拍一个主题：光。',tag:'摄影',detail:'当你开始专门寻找"光"，你会发现这个世界比你平时看到的更美。这不是为了发朋友圈，而是训练自己的眼睛——注意到那些平时被忽略的美。傍晚5点的光有蜂蜜的质感，雨后地上的反光像碎了的镜子。' },
+  { week:'第6周',emoji:'🕯',title:'DIY香薰蜡烛',desc:'买大豆蜡+灯芯+喜欢的精油，自己做一支蜡烛。',tag:'手作',detail:'自己做的蜡烛和买来的完全不一样。你选择喜欢的香味——甜橙的活泼或薰衣草的沉静。融化蜡油、滴入精油、固定灯芯……大约30分钟。点燃那一刻，整个房间都是你的气息。' },
+  { week:'第7周',emoji:'🍰',title:'做一道从没做过的甜品',desc:'提拉米苏/巴斯克/杨枝甘露……从买材料到装盘完整做一遍。',tag:'烘焙',detail:'不赶时间地做一道甜品。按部就班地称量、搅拌、等待烤箱里的香味飘出来……这个过程本身就是一种治愈。做完了拍照留念，慢慢吃或分享给身边人。"这里面有我的一个下午"是最动人的食物故事。' },
+  { week:'第8周',emoji:'📖',title:'泡独立书店',desc:'找一家独立书店，不赶时间地逛，选一本封面最心动的买走。',tag:'阅读',detail:'不去网上买书，不看书单推荐，就站在书架前面一本一本地翻。允许自己被一本书的封面、一个书名、随手翻到的一句话打动。书店的空气、纸页的气味、翻书的沙沙声——这些是电子屏幕永远给不了你的东西。' },
+  { week:'第9周',emoji:'🧘',title:'体验一节新身体课',desc:'普拉提/芭蕾把杆/颂钵/即兴舞蹈……选一个好奇的去试。',tag:'身体',detail:'我们每天都在"用"身体，但很少"感受"身体。去探索一种新的身体体验——不为减肥塑形，纯粹为好玩。你会发现身体能做很多你没想到的事，也会注意到自己哪个部位最僵硬。和身体做朋友，是所有气质的起点。' },
+  { week:'第10周',emoji:'🎬',title:'一个人看场电影/展览',desc:'一个人去，不是孤单，是"我和自己有一个约会"。',tag:'独处',detail:'一个人看电影、一个人看展——不是"没人陪"，是"我在陪我"。习惯了和自己的约会，你会更有底气。不需要等人的时间，不需要迁就别人的节奏，完完全全按自己的步调。看完出来找个咖啡馆坐一坐，在备忘录写下感受。' },
+  { week:'第11周',emoji:'🧵',title:'手工编织/刺绣',desc:'买一个入门材料包，跟着教程一针一线做。重复动作非常解压。',tag:'手作',detail:'编织和刺绣有一种奇妙的疗愈效果——重复的手部动作会让大脑进入近似冥想的状态。一开始可能会手笨，但做到第三排就找到节奏了。完成的那一刻你会看着自己的手说"这是我做出来的"，这种小小的成就感会在心里待很久。' },
+  { week:'第12周',emoji:'☕',title:'学做手冲咖啡',desc:'买基础手冲设备，学控水流、闷蒸、分段注水。',tag:'生活美学',detail:'手冲咖啡最迷人的不是咖啡本身，而是那3分钟你必须全神贯注——水温多少、水流多快、粉层膨胀得好不好看。这3分钟脑子里装不下别的事，相当于每天一次微型正念练习。当你终于冲出一杯"对了"的咖啡，那个味道比咖啡店任何一杯都好喝。' },
+];
+
+const proPlans = [
+  { week:'第1周',emoji:'📊',title:'建"客户百问百答"',desc:'把过去一个月客户问过的问题列出来，逐条写出标准回答。',tag:'知识管理',detail:'这是理财经理最有价值的个人资产。每次客户问到你不会的问题，诚实说"我需要确认一下"，记下来，回去弄懂，写出满意的话术。慢慢地你会发现客户问不倒你了。"问不倒"的底气是你最核心的专业自信来源。' },
+  { week:'第2周',emoji:'📈',title:'深度拆解一只明星基金',desc:'基金经理背景、持仓风格、最大回撤、适合人群、竞品对比——全研究透。',tag:'产品研究',detail:'选一只基金"吃透"：基金经理是谁？什么风格？前十大持仓是什么？最大回撤发生在什么时候？同类排名？适合哪类客户？风险点？用一张A4纸全部写下来。做完之后再有客户问这只基金，你可以从容自信说10分钟不带看资料的。这就是专业。' },
+  { week:'第3周',emoji:'🗣',title:'练3分钟产品讲解',desc:'选一个产品，用手机录自己3分钟的讲解，回听，删掉所有专业术语。',tag:'表达训练',detail:'很多理财经理讲产品的问题是：太多、太专业、客户听不懂。录一段3分钟讲解，回听，问自己——我妈能听懂吗？删掉所有不必要的术语换成大白话再录一遍。最好的讲解不是显得你专业，而是让客户觉得"我懂了"。' },
+  { week:'第4周',emoji:'📰',title:'写一篇市场复盘',desc:'500-800字写本周市场发生了什么、为什么、对投资者意味着什么。',tag:'内容输出',detail:'不只是罗列"涨了跌了"，而是解释"为什么"——最重要的是"对你的客户意味着什么"和"建议怎么做"。写完之后读一遍确保逻辑通顺。坚持下去，客户会觉得你是"能讲清楚的人"，而不只是一个卖产品的。' },
+  { week:'第5周',emoji:'🔍',title:'研究一个陌生资产类别',desc:'如果你主要做公募，就研究私募/信托/保险/黄金……扩展武器库。',tag:'知识扩展',detail:'理财经理最常见的瓶颈是"我只懂我卖的东西"。但客户需求是多元的——他们可能问你保险、信托、外汇、黄金甚至比特币。不用成为专家，但要"客户问了能接住话"。每2-3周选一个陌生领域了解基本框架。' },
+  { week:'第6周',emoji:'📋',title:'分析一个流失客户案例',desc:'想一个没谈成或流失的客户，复盘哪个环节出了问题。',tag:'案例复盘',detail:'成功案例让我们开心，失败案例让我们成长。选一个流失客户，不带情绪复盘：第一次接触→了解需求→推荐产品→跟进→最终结果。在哪个环节断掉了？信任没建立？需求没摸透？频率不对？写下来，这是最值钱的一课。' },
+  { week:'第7周',emoji:'💬',title:'练最难开口的对话',desc:'客户亏损怎么沟通？要赎回怎么挽留？写好话术，对着镜子练3遍。',tag:'沟通训练',detail:'最难的不是行情好时卖产品，而是行情差时稳住客户。选一个你最怵的对话场景——通知客户亏损、解释净值回撤、面对不满情绪——提前写好话术自己演练。等真的遇到，你已经在脑子里走过一遍了，不会慌。' },
+  { week:'第8周',emoji:'🔢',title:'精读一份产品合同',desc:'选一份产品合同或招募说明书，逐条读，不懂的条款全部查清楚。',tag:'合规与风控',detail:'有多少理财经理真正读过自己卖的产品的招募说明书？逐条读：费用结构、投资范围、风险揭示、退出机制、免责条款。每一个不懂的术语都查清楚。读完你可能会发现一些之前忽略的细节——这些细节就是你能比同行多给客户的一层保护。' },
+  { week:'第9周',emoji:'🎯',title:'梳理客户分层与策略',desc:'按资产量/风险偏好/活跃度把客户分3-4层，每层制定不同沟通策略。',tag:'客户管理',detail:'不是每个客户都需要同样的服务。拿出手上客户名单分层：核心客户（20%贡献80%业绩）→重点客户→基础客户→潜在客户。每一层设计不同沟通频率和服务标准。分层之后你的精力分配会清晰很多。' },
+  { week:'第10周',emoji:'📚',title:'读一本金融经典+写笔记',desc:'推荐《投资中最重要的事》或《穷查理宝典》，读完写500字感悟。',tag:'深度阅读',detail:'理财经理读金融书和普通读者不一样——你不是为了"知道"，是为了"能用"。一边读一边想：①这个观点能解释我最近看到的市场现象吗？②能变成给客户讲的一句话吗？③能帮做更好的配置建议吗？读完后写下来，把书变成你自己的。' },
+  { week:'第11周',emoji:'🏆',title:'整理成功案例集',desc:'回顾你帮客户赚钱/避险/解决问题的案例，整理成文档。',tag:'品牌建设',detail:'过去一两年你做了哪些让自己骄傲的事？帮客户避了什么坑？推荐了什么赚了钱？解决了什么棘手问题？每个案例写一段：客户遇到什么困难→你做了什么→结果怎样。不是为了炫耀，是提醒自己"我确实在帮人"——这是职业意义感的来源。' },
+  { week:'第12周',emoji:'🎤',title:'准备一堂你的公开课',desc:'选一个擅长的主题，准备20分钟分享。能讲课的理财经理职业天花板完全不同。',tag:'输出影响力',detail:'选一个你能讲的微课：选题要小（具体问题）、内容要实（案例+数据）、语言要白（大妈能听懂）。准备好后在营业部内部试讲一次。这是一种完全不同的能力，也是你未来职业跃迁的关键技能。' },
+];
+
+// ==========================================
+// STATE
+// ==========================================
+const STORAGE_KEY = 'jj_plan_v2';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+if (!state.artDone) state.artDone = {};
+if (!state.proDone) state.proDone = {};
+if (!state.lifeChecks) state.lifeChecks = {};
+if (!state.proChecks) state.proChecks = {};
+
+function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+// ==========================================
+// HEADER
+// ==========================================
+function updateHeader() {
+  const now = new Date();
+  const h = now.getHours();
+  let g = '☀️ 早安';
+  if (h >= 12 && h < 18) g = '🌤 下午好';
+  if (h >= 18) g = '🌙 晚上好';
+  document.getElementById('greeting').textContent = g;
+
+  const days = ['日','一','二','三','四','五','六'];
+  const m = now.getMonth()+1;
+  const d = now.getDate();
+  document.getElementById('headerDate').textContent = `${m}月${d}日 · 星期${days[now.getDay()]}`;
+
+  // Week range
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - ((now.getDay()+6)%7));
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate()+6);
+  document.getElementById('weekBadge').textContent = `${monday.getMonth()+1}.${monday.getDate()} — ${sunday.getMonth()+1}.${sunday.getDate()} · 本周`;
+}
+updateHeader();
+
+// ==========================================
+// PAGE SWITCHING
+// ==========================================
+const pages = document.querySelectorAll('.page');
+const tabItems = document.querySelectorAll('#tabbar .tab-item');
+
+function switchPage(name) {
+  const map = { weather:'page-weather', daily:'page-daily', pro:'page-pro', plan:'page-plan', check:'page-check', diet:'page-diet' };
+  pages.forEach(p => p.classList.remove('active'));
+  document.getElementById(map[name]).classList.add('active');
+  tabItems.forEach(t => t.classList.remove('active'));
+  tabItems.forEach(t => { if (t.dataset.page === name) t.classList.add('active'); });
+  document.getElementById('main').scrollTop = 0;
+  if (name === 'check') renderChecks();
+}
+
+tabItems.forEach(t => {
+  t.addEventListener('click', () => switchPage(t.dataset.page));
+});
+
+// ==========================================
+// ART & PRO CARDS
+// ==========================================
+function renderCards() {
+  const aDiv = document.getElementById('artCards');
+  aDiv.innerHTML = artPlans.map((p,i) => {
+    const done = state.artDone[i];
+    return `<div class="w-card ${done?'done':''}" onclick="openCardModal('art',${i})">
+      <span class="wc-emoji">${p.emoji}</span>
+      <div class="wc-week">${p.week}</div><div class="wc-title">${p.title}</div>
+      <div class="wc-desc">${p.desc}</div><span class="wc-tag">${p.tag}</span>
+    </div>`;
+  }).join('');
+
+  const pDiv = document.getElementById('proCards');
+  pDiv.innerHTML = proPlans.map((p,i) => {
+    const done = state.proDone[i];
+    return `<div class="p-card ${done?'done':''}" onclick="openCardModal('pro',${i})">
+      <span class="wc-emoji">${p.emoji}</span>
+      <div class="wc-week">${p.week}</div><div class="wc-title">${p.title}</div>
+      <div class="wc-desc">${p.desc}</div><span class="wc-tag">${p.tag}</span>
+    </div>`;
+  }).join('');
+}
+
+// ==========================================
+// CARD MODAL
+// ==========================================
+let currentCardType = null, currentCardIndex = null;
+
+function openCardModal(type, index) {
+  currentCardType = type;
+  currentCardIndex = index;
+  const list = type === 'art' ? artPlans : proPlans;
+  const done = type === 'art' ? state.artDone : state.proDone;
+  const p = list[index];
+
+  document.getElementById('msEmoji').textContent = p.emoji;
+  document.getElementById('msWeek').textContent = p.week;
+  document.getElementById('msTitle').textContent = p.title;
+  document.getElementById('msDesc').textContent = p.detail;
+  const btn = document.getElementById('msBtn');
+  btn.className = 'ms-btn ' + (type==='pro' ? 'pro-btn' : '');
+  if (done[index]) {
+    btn.textContent = '✓ 已完成 ✓';
+    btn.classList.add('did-it');
+  } else {
+    btn.textContent = '✓ 完成打卡';
+    btn.classList.remove('did-it');
+  }
+  document.getElementById('modal').classList.add('open');
+}
+
+function toggleCardDone() {
+  if (!currentCardType) return;
+  const done = currentCardType === 'art' ? state.artDone : state.proDone;
+  done[currentCardIndex] = !done[currentCardIndex];
+  save();
+  renderCards();
+  openCardModal(currentCardType, currentCardIndex); // refresh button
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+document.getElementById('modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+// Swipe down to close on modal sheet
+let touchStartY = 0;
+document.querySelector('.modal-sheet').addEventListener('touchstart', e => {
+  touchStartY = e.touches[0].clientY;
+});
+document.querySelector('.modal-sheet').addEventListener('touchmove', e => {
+  const dy = e.touches[0].clientY - touchStartY;
+  if (dy > 80 && document.querySelector('.modal-sheet').scrollTop <= 0) {
+    closeModal();
+  }
+});
+
+// ==========================================
+// DAILY CHECKLIST
+// ==========================================
+const lifeHabits = [
+  '早起15分钟内不碰手机',
+  '喝足 1.5L 水',
+  '涂防晒 + 喷香水',
+  '专心吃饭（不看手机）',
+  '运动/拉伸 20分钟+',
+  '体态管理：沉肩收腹不驼背',
+  '23:00前护肤+手机出卧室',
+];
+const proHabits = [
+  '盘前扫一眼外盘+金价',
+  '写下今日3个业务目标',
+  '主动联系3-5个客户',
+  '研究1个产品/学1个知识点',
+  '写今日市场小结（200字）',
+  '下班前复盘15分钟',
+  '读20分钟金融书/报告',
+];
+
+let checkTab = 'life';
+
+function getTodayKey() {
+  const now = new Date();
+  return `${now.getFullYear()}_${now.getMonth()}_${now.getDate()}`;
+}
+
+function switchCheckTab(tab) {
+  checkTab = tab;
+  document.querySelectorAll('#page-check .tab-pill').forEach(b => {
+    b.classList.remove('active');
+    if ((tab === 'life' && b.textContent.includes('生活')) ||
+        (tab === 'pro' && b.textContent.includes('专业'))) {
+      b.classList.add('active');
+    }
+  });
+  renderChecks();
+}
+
+function renderChecks() {
+  const today = getTodayKey();
+  const habits = checkTab === 'life' ? lifeHabits : proHabits;
+  const checks = checkTab === 'life' ? state.lifeChecks : state.proChecks;
+  const todayChecks = checks[today] || {};
+  const isPro = checkTab === 'pro';
+
+  document.getElementById('checkDate').textContent = `📅 ${today.replace(/_/g,'/')}`;
+
+  const div = document.getElementById('checkList');
+  div.innerHTML = habits.map((h, i) => {
+    const done = todayChecks[i];
+    return `<div class="check-item ${isPro?'pro-item':''} ${done?'done':''}" onclick="toggleCheck('${checkTab}',${i})">
+      <div class="check-dot">${done?'✓':''}</div>
+      <span class="check-label">${h}</span>
+    </div>`;
+  }).join('');
+}
+
+function toggleCheck(tab, index) {
+  const today = getTodayKey();
+  const checks = tab === 'life' ? state.lifeChecks : state.proChecks;
+  if (!checks[today]) checks[today] = {};
+  checks[today][index] = !checks[today][index];
+  save();
+  renderChecks();
+}
+
+function resetToday() {
+  if (!confirm('确定要清空今天的打卡记录吗？')) return;
+  const today = getTodayKey();
+  state.lifeChecks[today] = {};
+  state.proChecks[today] = {};
+  save();
+  renderChecks();
+}
+
+// ==========================================
+// INSTALL BANNER (iOS)
+// ==========================================
+function dismissInstall() {
+  document.getElementById('installBanner').style.display = 'none';
+  localStorage.setItem('jj_install_dismissed', '1');
+}
+
+// Show banner for iOS Safari (standalone check)
+if (window.navigator.standalone === undefined && !localStorage.getItem('jj_install_dismissed')) {
+  // Likely not installed, show after a delay
+  setTimeout(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS) {
+      document.getElementById('installBanner').style.display = 'block';
+    }
+  }, 2000);
+}
+
+// Android: listen for beforeinstallprompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('jj_install_dismissed')) {
+    setTimeout(() => {
+      document.getElementById('installBanner').style.display = 'block';
+    }, 2000);
+  }
+});
+
+// ==========================================
+// SERVICE WORKER (offline support)
+// ==========================================
+if ('serviceWorker' in navigator) {
+  // Create inline service worker via blob
+  const swCode = `
+const CACHE = 'jj-plan-v1';
+const URLS = ['${location.href}'];
+
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)).catch(()=>{}));
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(self.clients.claim());
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+      if (resp.ok) {
+        const clone = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+      }
+      return resp;
+    }).catch(() => caches.match(e.request)))
+  );
+});
+`;
+  const swBlob = new Blob([swCode], {type: 'application/javascript'});
+  const swURL = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swURL).catch(() => {});
+}
+
+// ==========================================
+// INIT
+// ==========================================
+renderCards();
+renderChecks();
+
+// ==========================================
+// PULL TO REFRESH (basic)
+// ==========================================
+let pullStart = 0;
+document.getElementById('main').addEventListener('touchstart', e => {
+  pullStart = e.touches[0].clientY;
+});
+document.getElementById('main').addEventListener('touchmove', e => {
+  if (document.getElementById('main').scrollTop <= 0) {
+    const dy = e.touches[0].clientY - pullStart;
+    if (dy > 100) {
+      updateHeader();
+      renderChecks();
+    }
+  }
+});
+
+// ==========================================
+// DIET / WEIGHT LOSS (shared with wloss_v8)
+// ==========================================
+const DIET_START = new Date(2026, 4, 28);
+const DIET_DAYS = 45;
+const DIET_START_WT = 57;
+const DIET_TARGET_WT = 52.5;
+const DIET_GOAL_KG = DIET_START_WT - DIET_TARGET_WT;
+
+function dietTodayStr() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function dietDayNum() {
+  const diff = Math.floor((new Date() - DIET_START) / 86400000) + 1;
+  return Math.max(1, Math.min(DIET_DAYS, diff));
+}
+
+const DIET_KEY = 'wloss_v8';
+function dietLoad() { try { return JSON.parse(localStorage.getItem(DIET_KEY)) || {}; } catch(e) { return {}; } }
+function dietSave(d) { localStorage.setItem(DIET_KEY, JSON.stringify(d)); }
+function dietGetDay(d) {
+  const data = dietLoad();
+  return data[d] || { checks:{}, steps:0, weight:null, water:{} };
+}
+function dietSetDay(d, obj) { const data = dietLoad(); data[d] = obj; dietSave(data); }
+
+let dietDay = dietTodayStr();
+let dietDayData = dietGetDay(dietDay);
+
+function dietGetLatestWeight() {
+  const data = dietLoad();
+  const days = Object.keys(data).filter(function(d) { return data[d].weight; }).sort();
+  return days.length > 0 ? data[days[days.length-1]].weight : null;
+}
+function dietGetLostKg() {
+  const latest = dietGetLatestWeight();
+  if (!latest) return 0;
+  return Math.max(0, DIET_START_WT - latest);
+}
+
+function dietDrawRing() {
+  var canvas = document.getElementById('dietRingCanvas');
+  if (!canvas) return;
+  var dpr = window.devicePixelRatio || 1;
+  var size = 120;
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  var ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  var cx = size/2, cy = size/2, r = 48;
+  ctx.clearRect(0, 0, size, size);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.strokeStyle = '#ede6e0';
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  var lost = dietGetLostKg();
+  var pct = Math.min(1, lost / DIET_GOAL_KG);
+  var grad = ctx.createLinearGradient(cx-r, cy-r, cx+r, cy+r);
+  grad.addColorStop(0, '#d4a574');
+  grad.addColorStop(1, '#c77d7d');
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + pct*Math.PI*2);
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = 8;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+  document.getElementById('dietRingNum').textContent = (lost * 2).toFixed(1);
+  document.getElementById('dietDayNum').textContent = dietDayNum();
+}
+
+function dietSaveWeight() {
+  var input = document.getElementById('dietWeightInput');
+  var w = parseFloat(input.value);
+  if (!w || w < 40 || w > 60) { alert('请输入有效体重（40-60kg）'); return; }
+  var day = dietGetDay(dietDay);
+  day.weight = w;
+  dietSetDay(dietDay, day);
+  dietDayData = day;
+  dietDrawRing();
+  dietRenderWater();
+  document.getElementById('dietWeightNote').textContent = '已记录 ' + w + ' kg ✓';
+  input.value = '';
+}
+
+function dietRenderWater() {
+  var grid = document.getElementById('dietWaterGrid');
+  if (!grid) return;
+  var cups = [
+    { id:'w0', label:'起床', icon:'🌅' },
+    { id:'w1', label:'上午', icon:'☀️' },
+    { id:'w2', label:'午前', icon:'🕐' },
+    { id:'w3', label:'下午', icon:'🌤' },
+    { id:'w4', label:'晚饭前', icon:'🌇' },
+    { id:'w5', label:'晚上', icon:'🌙' },
+  ];
+  var dd = dietDayData;
+  grid.innerHTML = cups.map(function(c) {
+    var done = dd.water && dd.water[c.id];
+    return '<div class="diet-cup' + (done?' done':'') + '" onclick="dietToggleWater(\'' + c.id + '\')">' +
+      '<span class="cup-icon">' + c.icon + '</span>' + c.label +
+    '</div>';
+  }).join('');
+}
+
+function dietToggleWater(id) {
+  var day = dietGetDay(dietDay);
+  if (!day.water) day.water = {};
+  day.water[id] = !day.water[id];
+  dietSetDay(dietDay, day);
+  dietDayData = day;
+  dietRenderWater();
+}
+
+function dietChangeSteps(delta) {
+  var day = dietGetDay(dietDay);
+  day.steps = Math.max(0, (day.steps || 0) + delta);
+  dietSetDay(dietDay, day);
+  dietDayData = day;
+  document.getElementById('dietStepDisplay').textContent = day.steps;
+}
+
+function dietRefresh() {
+  dietDay = dietTodayStr();
+  dietDayData = dietGetDay(dietDay);
+  dietDrawRing();
+  dietRenderWater();
+  var stepEl = document.getElementById('dietStepDisplay');
+  if (stepEl) stepEl.textContent = dietDayData.steps || 0;
+  var w = dietDayData.weight || dietGetLatestWeight();
+  var noteEl = document.getElementById('dietWeightNote');
+  if (noteEl) noteEl.textContent = w ? '最新记录：' + w + ' kg' : '今天还没称体重哦';
+}
+
+// Update page switching to refresh diet page
+var origSwitchPage = switchPage;
+switchPage = function(name) {
+  origSwitchPage(name);
+  if (name === 'diet') dietRefresh();
+};
+
+
+// ==========================================
+// WEATHER (Open-Meteo API, cached 1 hour)
+// ==========================================
+const WEATHER_CACHE_KEY = 'jj_weather_cache';
+const YC_LAT = 30.7083;
+const YC_LON = 111.2805;
+
+const WMO_CODES = {
+  0: { icon:'☀️', desc:'晴' },
+  1: { icon:'🌤', desc:'少云' },
+  2: { icon:'⛅', desc:'多云' },
+  3: { icon:'☁️', desc:'阴' },
+  45: { icon:'🌫', desc:'雾' },
+  48: { icon:'🌫', desc:'冻雾' },
+  51: { icon:'🌦', desc:'小毛毛雨' },
+  53: { icon:'🌦', desc:'毛毛雨' },
+  55: { icon:'🌦', desc:'大毛毛雨' },
+  61: { icon:'🌧', desc:'小雨' },
+  63: { icon:'🌧', desc:'中雨' },
+  65: { icon:'🌧', desc:'大雨' },
+  71: { icon:'🌨', desc:'小雪' },
+  73: { icon:'🌨', desc:'中雪' },
+  75: { icon:'🌨', desc:'大雪' },
+  77: { icon:'🌨', desc:'雪粒' },
+  80: { icon:'🌦', desc:'阵雨' },
+  81: { icon:'🌦', desc:'中等阵雨' },
+  82: { icon:'🌧', desc:'大阵雨' },
+  85: { icon:'🌨', desc:'小阵雪' },
+  86: { icon:'🌨', desc:'大阵雪' },
+  95: { icon:'⛈', desc:'雷暴' },
+  96: { icon:'⛈', desc:'雷暴+小冰雹' },
+  99: { icon:'⛈', desc:'雷暴+大冰雹' },
+};
+
+function getWeatherCache() {
+  try {
+    var c = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY));
+    if (c && c.time && (Date.now() - c.time < 3600000)) return c.data;
+  } catch(e) {}
+  return null;
+}
+
+function setWeatherCache(data) {
+  localStorage.setItem(WEATHER_CACHE_KEY, JSON.stringify({ time: Date.now(), data: data }));
+}
+
+function getClothingAdvice(minTemp, maxTemp) {
+  var avg = (minTemp + maxTemp) / 2;
+  if (maxTemp > 32) return { icon:'👗', text:'今天很热！推荐<strong>短袖/吊带+短裤/短裙</strong>，面料选棉麻。记得涂防晒。' };
+  if (maxTemp > 28) return { icon:'👚', text:'偏热，推荐<strong>短袖+薄长裤/半裙</strong>，带件防晒衫。' };
+  if (maxTemp > 24) return { icon:'👕', text:'温暖舒适，推荐<strong>短袖/薄长袖+长裤/半裙</strong>，早晚可能凉加件薄外套。' };
+  if (maxTemp > 20) return { icon:'🧥', text:'微凉，推荐<strong>长袖+薄外套/开衫</strong>，早晚需要外套。' };
+  if (maxTemp > 15) return { icon:'🧥', text:'偏凉，推荐<strong>长袖+风衣/夹克</strong>，可以叠穿方便调节。' };
+  if (maxTemp > 10) return { icon:'🧣', text:'冷，推荐<strong>毛衣+厚外套/薄羽绒</strong>，注意保暖。' };
+  return { icon:'🧤', text:'很冷！推荐<strong>厚羽绒服+围巾+手套</strong>，全副武装。' };
+}
+
+function getUmbrellaAdvice(maxPrecipProb) {
+  if (maxPrecipProb >= 60) return { icon:'☔', text:'降雨概率 <strong>' + maxPrecipProb + '%</strong>，<strong>一定要带伞</strong>！' };
+  if (maxPrecipProb >= 35) return { icon:'🌂', text:'降雨概率 ' + maxPrecipProb + '%，<strong>建议带把伞</strong>以防万一。' };
+  if (maxPrecipProb >= 15) return { icon:'🌥', text:'降雨概率 ' + maxPrecipProb + '%，基本不用带伞。' };
+  return { icon:'☀️', text:'今天不会下雨，不用带伞。' };
+}
+
+function getSunscreenAdvice(uvMax) {
+  if (uvMax >= 6) return { icon:'🧴', text:'紫外线指数 <strong>' + uvMax + '</strong>（很强），<strong>必须涂防晒！</strong>帽子墨镜也带上。' };
+  if (uvMax >= 3) return { icon:'☀️', text:'紫外线指数 ' + uvMax + '（中等），<strong>建议涂防晒</strong>。' };
+  return { icon:'🌥', text:'紫外线指数 ' + uvMax + '（较弱），不需要特别防晒。' };
+}
+
+function renderWeatherPage(data) {
+  if (!data) return;
+  var c = data.current;
+  var d = data.daily;
+  var h = data.hourly;
+
+  // Current
+  document.getElementById('weatherTemp').textContent = Math.round(c.temperature_2m) + '°';
+  var w = WMO_CODES[c.weather_code] || { icon:'❓', desc:'未知' };
+  document.getElementById('weatherIcon').textContent = w.icon;
+  document.getElementById('weatherDesc').textContent = w.desc + ' · 湿度 ' + c.relative_humidity_2m + '%';
+  document.getElementById('weatherHi').textContent = Math.round(d.temperature_2m_max[0]) + '°';
+  document.getElementById('weatherLo').textContent = Math.round(d.temperature_2m_min[0]) + '°';
+  document.getElementById('weatherFeels').textContent = Math.round(c.apparent_temperature) + '°';
+
+  // Rain timeline
+  var now = new Date();
+  var currentHour = now.getHours();
+  var rainHTML = '';
+  var maxPrecip = 0;
+  for (var i = 0; i < 12; i++) {
+    var hourIdx = currentHour + i;
+    if (hourIdx >= h.time.length) break;
+    var prob = h.precipitation_probability[hourIdx] || 0;
+    if (prob > maxPrecip) maxPrecip = prob;
+    var displayHour = hourIdx % 24;
+    var label = displayHour + ':00';
+    if (i === 0) label = '现在';
+    if (i === 1) label = displayHour + ':00';
+    var color = prob >= 60 ? '#6b8fc7' : (prob >= 30 ? '#a0b8dc' : '#e0dfe6');
+    var height = Math.max(4, prob * 0.55);
+    rainHTML += '<div class="rain-bar-col">' +
+      '<div class="rain-bar-pct">' + (prob >= 20 ? prob + '%' : '') + '</div>' +
+      '<div class="rain-bar-fill" style="height:' + height + 'px;background:' + color + ';"></div>' +
+      '<div class="rain-bar-label">' + label + '</div>' +
+      '</div>';
+  }
+  document.getElementById('rainTimeline').innerHTML = rainHTML;
+
+  // Predict when rain is most likely
+  var rainStart = -1;
+  for (var j = 0; j < 24; j++) {
+    if (h.precipitation_probability[j] >= 50) { rainStart = j; break; }
+  }
+  var rainNote = '';
+  if (rainStart >= 0) {
+    rainNote = '<div style="font-size:11px;color:var(--ink-light);margin-top:6px;">✦ 预计 <strong>' + rainStart + ':00</strong> 左右开始降雨，出门记得带伞</div>';
+  }
+
+  // Advice
+  var adviceHTML = '';
+  var uv = d.uv_index_max[0] || 0;
+  var umbrella = getUmbrellaAdvice(maxPrecip);
+  var sunscreen = getSunscreenAdvice(uv);
+  var clothing = getClothingAdvice(d.temperature_2m_min[0], d.temperature_2m_max[0]);
+
+  adviceHTML += '<div class="advice-row"><span class="advice-icon">' + umbrella.icon + '</span><span class="advice-text">' + umbrella.text + '</span></div>';
+  adviceHTML += '<div class="advice-row"><span class="advice-icon">' + sunscreen.icon + '</span><span class="advice-text">' + sunscreen.text + '</span></div>';
+  adviceHTML += '<div class="advice-row"><span class="advice-icon">' + clothing.icon + '</span><span class="advice-text">' + clothing.text + '</span></div>';
+  if (rainNote) adviceHTML += rainNote;
+
+  document.getElementById('weatherAdvice').innerHTML = adviceHTML;
+}
+
+function showWeatherError(msg) {
+  document.getElementById('weatherDesc').textContent = msg || '无法获取天气数据';
+  document.getElementById('weatherAdvice').innerHTML = '<div class="weather-error">' + (msg || '网络连接失败，请检查网络后重试') + '<br><button onclick="fetchWeather()">重新加载</button></div>';
+}
+
+function fetchWeather() {
+  document.getElementById('weatherDesc').textContent = '加载中...';
+  document.getElementById('weatherIcon').textContent = '⏳';
+
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + YC_LAT + '&longitude=' + YC_LON +
+    '&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,uv_index' +
+    '&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max' +
+    '&hourly=precipitation_probability,temperature_2m,weather_code' +
+    '&timezone=Asia/Shanghai&forecast_days=1';
+
+  fetch(url)
+    .then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function(data) {
+      setWeatherCache(data);
+      renderWeatherPage(data);
+    })
+    .catch(function(err) {
+      console.error('Weather fetch error:', err);
+      // Try cache even if expired
+      var cache = JSON.parse(localStorage.getItem(WEATHER_CACHE_KEY) || '{}');
+      if (cache.data) {
+        renderWeatherPage(cache.data);
+        document.getElementById('weatherDesc').textContent += ' (缓存数据)';
+      } else {
+        showWeatherError('无法连接天气服务');
+      }
+    });
+}
+
+function weatherLoad() {
+  var now = new Date();
+  document.getElementById('weatherDateSm').textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 · 星期' + ['日','一','二','三','四','五','六'][now.getDay()];
+
+  var cached = getWeatherCache();
+  if (cached) {
+    renderWeatherPage(cached);
+  } else {
+    fetchWeather();
+  }
+}
+
+// Chain onto existing switchPage override (which already handles diet)
+var origSwitchPage2 = switchPage;
+switchPage = function(name) {
+  origSwitchPage2(name);
+  if (name === 'weather') weatherLoad();
+};
+
+// Load weather on first visit
+weatherLoad();
+
+// Auto-refresh weather every 30 minutes
+setInterval(function() {
+  var cached = getWeatherCache();
+  if (!cached) {
+    fetchWeather();
+  }
+}, 1800000);
+
+// Refresh weather when app comes back to foreground
+document.addEventListener('visibilitychange', function() {
+  if (!document.hidden) {
+    var cached = getWeatherCache();
+    if (cached) {
+      renderWeatherPage(cached);
+    }
+    // Refresh date display
+    var now = new Date();
+    var dateEl = document.getElementById('weatherDateSm');
+    if (dateEl) dateEl.textContent = now.getFullYear() + '年' + (now.getMonth()+1) + '月' + now.getDate() + '日 · 星期' + ['日','一','二','三','四','五','六'][now.getDay()];
+  }
+});
+
+</script>
+
+</body>
+</html>
