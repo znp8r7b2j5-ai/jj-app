@@ -749,7 +749,7 @@ document.write('<link rel="manifest" href="' + manifestURL + '">');
 
   <!-- ===== SAVE BANNER ===== -->
   <div id="saveBanner" onclick="saveToPhone()">
-    📲 手机 Safari 打开 <strong>http://192.168.0.104:8888</strong> → 分享 → 添加到主屏幕
+    📲 手机 Safari 打开 <strong id="bannerUrl">https://znp8r7b2j5-ai.github.io/jj-app/</strong> → 分享 → 添加到主屏幕
   </div>
 
   <!-- ===== MAIN ===== -->
@@ -1093,6 +1093,14 @@ function saveToPhone() {
 if (window.navigator.standalone) {
   document.getElementById('saveBanner').classList.add('hidden');
 }
+
+// Update banner URL to match current host
+(function() {
+  var bannerEl = document.getElementById('bannerUrl');
+  if (bannerEl && location.hostname !== 'localhost' && !location.hostname.startsWith('192.168.')) {
+    bannerEl.textContent = location.origin + location.pathname;
+  }
+})();
 
 // ==========================================
 // DATA
